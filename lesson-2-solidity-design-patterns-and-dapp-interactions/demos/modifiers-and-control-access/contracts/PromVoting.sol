@@ -21,6 +21,8 @@ contract PromVoting {
     mapping(uint => Candidate) public candidates;
     // Counter to keep track of the total number of candidates
     uint public candidatesCount;
+    // State variable to keep track of the total number of votes
+    uint public totalVotes;
 
     // Mapping from voter's address to the Vote struct, for storing and restricting duplicate votes
     mapping(address => Vote) public votes;
@@ -89,5 +91,10 @@ contract PromVoting {
     // Function to retrieve the vote count for a specific candidate
     function getCandidateVoteCount(uint _candidateId) public view returns (uint) {
         return candidates[_candidateId].voteCount;
+    }
+
+    // Function to get the total number of votes cast in the election
+    function getTotalVotes() public view returns (uint) {
+        return totalVotes; // Return the total number of votes
     }
 }

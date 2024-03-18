@@ -1,126 +1,130 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-// Import Math library from OpenZeppelin Contracts
+// Importing OpenZeppelin's Math library for safe mathematical operations.
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-// Declaration of the PromVoting contract
+// PromVoting contract declaration
 contract PromVoting {
-    // Use Math library for uint256 type
+    // Using Math library for uint256 type for any necessary mathematical operations beyond basic arithmetic.
     using Math for uint256;
-    // A struct representing a candidate in the voting system
+
+    // Struct to represent a candidate
     struct Candidate {
         uint id; // Unique identifier for a candidate
         string name; // Name of the candidate
-        uint voteCount; // Total number of votes received by the candidate
-        address candidateAddress; // Ethereum address associated with the candidate
+        uint voteCount; // Number of votes received
+        address candidateAddress; // Ethereum address of the candidate to prevent self-voting
     }
 
-    // A struct representing a vote cast in the system
+    // Struct to represent a vote
     struct Vote {
-        uint candidateId; // ID of the candidate voted for
+        uint candidateId; // Candidate ID that was voted for
         uint timestamp; // Time when the vote was cast
     }
 
-    // Mapping from candidate ID to the Candidate struct, for storing and retrieving candidate details
+    // Mapping to store candidates, accessed by their ID
     mapping(uint => Candidate) public candidates;
-    // Counter to keep track of the total number of candidates
+    // Counter for the total number of candidates
     uint public candidatesCount;
-    // State variable to keep track of the total number of votes
+    // Total number of votes cast across all candidates
     uint public totalVotes;
-    // Threshold to automatically register a winner
-    uint public winningThreshold;
 
-    // Mapping from voter's address to the Vote struct, for storing and restricting duplicate votes
+    // Mapping to store votes by voter address to prevent duplicate voting
     mapping(address => Vote) public votes;
-    // Mapping to track which addresses are registered to vote
+    // Mapping to keep track of registered voters
     mapping(address => bool) public registeredVoters;
 
-    // Variables to manage the voting period
+    // Variables to manage the voting period, initialized in the constructor
     uint public startTime; // Voting start time
     uint public endTime; // Voting end time
-    address public owner; // Owner of the contract, typically the deployer
+    // Owner of the contract, typically the deployer
+    address public owner;
+
+    // Threshold of votes needed for a candidate to automatically win
+    uint public winningThreshold;
 
     // Event emitted when a vote is successfully cast
     event VoteCast(uint candidateId, uint timestamp);
-    // Event to signal that a winner has been registered automatically
-    event WinnerRegistered(uint candidateId);
+    // Event declared for when a winner is determined based on the threshold
+    event WinnerDeclared(uint candidateId);
 
-    // Modifier to restrict certain actions to the contract's owner
+    // Modifiers for access control and to ensure actions are taken within specified conditions
     modifier onlyOwner() {
         require(msg.sender == owner, "Only the contract owner can perform this action.");
         _;
     }
 
-    // Modifier to ensure actions are taken only during the allowed voting period
     modifier onlyDuringVotingPeriod() {
         require(block.timestamp >= startTime && block.timestamp <= endTime, "Voting is not currently open.");
         _;
     }
 
-    // Modifier to allow only registered voters to proceed with voting
     modifier onlyRegisteredVoters() {
         require(registeredVoters[msg.sender], "You must be a registered voter.");
         _;
     }
 
-    // Modifier to prevent a candidate from voting for themselves
     modifier cannotVoteForSelf(uint _candidateId) {
         require(candidates[_candidateId].candidateAddress != msg.sender, "You cannot vote for yourself.");
         _;
     }
 
-    // Constructor to initialize the voting contract with a voting duration
-    constructor(uint _votingDuration) {
-        startTime = block.timestamp; // Set start time to current block timestamp
-        endTime = startTime + _votingDuration; // Calculate end time based on duration
-        owner = msg.sender; // Assign contract deployer as the owner
+    // Constructor sets up voting duration and owner
+    constructor(uint _votingDuration, uint _winningThreshold) {
+        startTime = block.timestamp; 
+        endTime = startTime + _votingDuration; 
+        owner = msg.sender;
+        winningThreshold = _winningThreshold; // Set the winning threshold
     }
 
-    // Function to register a voter, restricted to the contract's owner
+    // Functions for contract interactions
+
+    // Registers a voter, restricted to owner
     function registerVoter(address _voter) public onlyOwner {
         registeredVoters[_voter] = true;
     }
 
-    // Function to add a new candidate, including their Ethereum address
+    // Adds a new candidate
     function addCandidate(string memory _name, address _candidateAddress) public onlyOwner {
-        candidatesCount++; // Increment the total candidate count
-        // Create a new candidate and add to the mapping
+        candidatesCount++;
         candidates[candidatesCount] = Candidate(candidatesCount, _name, 0, _candidateAddress);
     }
 
-    // Function to set the winning threshold
-    function setWinningThreshold(uint _threshold) public onlyOwner {
-        winningThreshold = _threshold;
-    }
-
-    // Function to cast a vote for a candidate, including checks for voting period, registration, and self-voting
+    // Casts a vote for a candidate
     function vote(uint _candidateId) public onlyDuringVotingPeriod onlyRegisteredVoters cannotVoteForSelf(_candidateId) {
-        require(votes[msg.sender].timestamp == 0, "Voter has already voted."); // Ensure the voter hasn't already voted
-        candidates[_candidateId].voteCount += 1; // Increment the selected candidate's vote count
-        totalVotes += 1; // Update total votes
-        votes[msg.sender] = Vote(_candidateId, block.timestamp); // Record the vote
-        emit VoteCast(_candidateId, block.timestamp); // Emit an event for the vote
-
-        // Check if the candidate has reached the winning threshold
-        if(candidates[_candidateId].voteCount >= winningThreshold) {
-            emit WinnerRegistered(_candidateId); // Emit an event when a winner has met the threshold
-        }
+        require(votes[msg.sender].timestamp == 0, "Voter has already voted.");
+        candidates[_candidateId].voteCount += 1;
+        totalVotes += 1; // Increment the total vote count
+        votes[msg.sender] = Vote(_candidateId, block.timestamp);
+        emit VoteCast(_candidateId, block.timestamp);
     }
 
-    // Function to retrieve the vote count for a specific candidate
+    // Retrieves the vote count for a specific candidate
     function getCandidateVoteCount(uint _candidateId) public view returns (uint) {
         return candidates[_candidateId].voteCount;
     }
 
-    // Function to get the total number of votes cast in the election
-    function getTotalVotes() public view returns (uint) {
-        return totalVotes; // Return the total number of votes
+    // Calculates the average number of votes per candidate
+    function calculateAverageVotes() public view returns (uint) {
+        if (candidatesCount == 0) return 0; 
+        return totalVotes / candidatesCount; 
     }
 
-    // Function to calculate the average votes per candidate
-    function calculateAverageVotes() public view returns (uint) {
-        // Using OpenZeppelin's Math library for safe division
-        return totalVotes.div(candidatesCount);
+    // Checks for a winner based on the winning threshold
+    function checkAndRegisterWinner() public {
+        uint256 highestVotes = 0;
+        uint256 winnerId = 0;
+        for (uint i = 1; i <= candidatesCount; i++) {
+            uint256 candidateVotes = candidates[i].voteCount;
+            if (candidateVotes >= winningThreshold) {
+                highestVotes = Math.max(highestVotes, candidateVotes);
+                winnerId = i; 
+            }
+        }
+
+        if (winnerId > 0) {
+            emit WinnerDeclared(winnerId);
+        }
     }
 }

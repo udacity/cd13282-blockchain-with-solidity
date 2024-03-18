@@ -7,7 +7,7 @@ require("dotenv/config"); // Loads environment variables from a .env file into p
 const config = {
   // Solidity compiler configuration
   solidity: {
-    version: "0.8.0", // Specifies the Solidity version to use
+    version: "0.8.19", // Specifies the Solidity version to use
     settings: {
       optimizer: {
         enabled: true, // Enables Solidity optimizer

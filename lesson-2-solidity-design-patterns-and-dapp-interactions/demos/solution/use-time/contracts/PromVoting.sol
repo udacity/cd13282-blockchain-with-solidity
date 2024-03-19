@@ -46,6 +46,7 @@ contract PromVoting {
 
     // Function to cast a vote for a candidate
     function vote(uint _candidateId) public {
+        require(block.timestamp >= startTime && block.timestamp <= endTime, "Voting is not currently open.");
         candidates[_candidateId].voteCount += 1; // Increment the vote count for the chosen candidate
         votes[msg.sender] = Vote(_candidateId, block.timestamp); // Record the vote
         totalVotes += 1; // Increment totalVotes each time a vote is cast

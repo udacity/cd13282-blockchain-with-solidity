@@ -1,53 +1,71 @@
-// Import the necessary libraries. 'chai' is used for assertions, and 'ethers' for interacting with Ethereum.
+// Import necessary libraries for testing.
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-// Describe a test suite for the PromVoting contract. This is a group of tests related to PromVoting functionality.
+// Describe the test suite for the PromVoting contract.
 describe("PromVoting", function () {
-  let promVoting; // This variable will hold our deployed PromVoting contract.
-  let owner; // This will represent the contract owner in tests.
-  let addr1; // This will represent another user.
+  let promVoting; // Variable to hold the deployed PromVoting contract.
+  let owner; // Represents the contract owner in tests.
+  let addr1; // Represents another user.
 
-  // 'beforeEach' is a hook that runs before each test. It's used to set up the environment for each test case.
+  // Hook that runs before each test, used to deploy a fresh instance of the contract.
   beforeEach(async function () {
-    // Get the ContractFactory for PromVoting, which allows us to deploy new instances of the contract.
+    // Get the ContractFactory for PromVoting, which allows deploying new contract instances.
     const PromVoting = await ethers.getContractFactory("PromVoting");
-    // Get signers. Signers represent different accounts that can interact with the contract.
+    // Get signers to represent different accounts interacting with the contract.
     [owner, addr1] = await ethers.getSigners();
-
-    // Deploy a fresh instance of the PromVoting contract before each test.
+    // Deploy a new instance of the PromVoting contract.
     promVoting = await PromVoting.deploy();
   });
 
-  // Test case: Ensuring a candidate can be added successfully.
-  it("Should deploy and add a candidate", async function () {
-    // Call the addCandidate function of our contract.
+  // Test case to ensure multiple candidates can be added successfully.
+  it("Should deploy and add multiple candidates", async function () {
+    // Add candidates using the addCandidate function.
     await promVoting.addCandidate("Alice");
-    // Retrieve the candidate's details.
-    const candidate = await promVoting.candidate();
-    // Check if the candidate's name matches what we added.
-    expect(candidate.name).to.equal("Alice");
+    await promVoting.addCandidate("Bob");
+
+    // Retrieve and verify each candidate's details.
+    const alice = await promVoting.candidates(1);
+    const bob = await promVoting.candidates(2);
+
+    // Check if the candidate names match what was added.
+    expect(alice.name).to.equal("Alice");
+    expect(bob.name).to.equal("Bob");
   });
 
-  // Test case: Ensuring that voting for a candidate emits an event and increments the vote count.
-  it("Should allow voting and emit an event", async function () {
-    // First, add a candidate to vote for.
+  // Test case to ensure that voting for a specific candidate emits an event and increments their vote count.
+  it("Should allow voting for a specific candidate and emit an event", async function () {
+    // Add candidates to enable voting.
     await promVoting.addCandidate("Alice");
-    // Perform a vote and expect the 'VoteCast' event to be emitted with the candidate's name.
-    await expect(promVoting.vote())
+    await promVoting.addCandidate("Bob");
+
+    // Perform a vote for a specific candidate and expect the 'VoteCast' event to be emitted with the candidate ID.
+    await expect(promVoting.vote(1)) // Vote for candidate with ID 1 (Alice).
       .to.emit(promVoting, "VoteCast")
-      .withArgs("Alice");
-    // Check if the candidate's vote count is incremented.
-    const candidate = await promVoting.candidate();
-    expect(candidate.voteCount).to.equal(1);
+      .withArgs(1);
+
+    // Retrieve Alice's details and verify the vote count has incremented.
+    const alice = await promVoting.candidates(1);
+    expect(alice.voteCount).to.equal(1);
   });
 
-  // Test case: Verifying that the contract correctly reports the number of votes a candidate has received.
-  it("Should return the correct vote count after voting", async function () {
-    // Add a candidate and vote for them.
+  // Test case to verify the contract correctly reports the number of votes each candidate has received after multiple votes.
+  it("Should return the correct vote count after voting for multiple candidates", async function () {
+    // Add candidates to enable voting.
     await promVoting.addCandidate("Alice");
-    await promVoting.vote();
-    // Check if the getVoteCount function returns the expected vote count.
-    expect(await promVoting.getVoteCount()).to.equal(1);
+    await promVoting.addCandidate("Bob");
+
+    // Cast votes for candidates.
+    await promVoting.vote(1); // Vote for Alice.
+    await promVoting.vote(2); // Vote for Bob.
+    await promVoting.vote(1); // Vote for Alice again.
+
+    // Retrieve and verify the vote count for each candidate.
+    const aliceVoteCount = await promVoting.getCandidateVoteCount(1); // Alice's votes.
+    const bobVoteCount = await promVoting.getCandidateVoteCount(2); // Bob's votes.
+
+    // Check if the vote counts match the expected values.
+    expect(aliceVoteCount).to.equal(2); // Alice should have 2 votes.
+    expect(bobVoteCount).to.equal(1); // Bob should have 1 vote.
   });
 });

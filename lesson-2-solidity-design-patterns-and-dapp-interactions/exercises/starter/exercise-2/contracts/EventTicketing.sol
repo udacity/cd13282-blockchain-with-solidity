@@ -21,27 +21,30 @@ contract EventTicketing {
     uint public startTime; // Sales start time.
     uint public endTime; // Sales end time.
 
-    // TODO: Add an owner state variable to represent the event organizer.
-
-    // TODO: Implement the onlyOwner modifier to restrict certain actions to the event organizer only.
-
     // TODO: Implement the salesOpen modifier to ensure ticket purchases are made during the designated sales period.
 
     constructor(uint _startTime, uint _endTime) {
         require(_endTime > _startTime, "End time must be after start time.");
         startTime = _startTime;
         endTime = _endTime;
-        // TODO: Initialize the owner state variable with the contract deployer's address.
     }
 
-    // Function to set the event's name and the maximum number of tickets, restricted to the event organizer.
+    // Function to set the event's name and the maximum number of tickets.
     function setEventDetails(string memory _eventName, uint _maxTickets) public {
-        // TODO: Ensure only the event organizer can set event details.
+        require(bytes(_eventName).length > 0, "Event name cannot be empty.");
+        require(_maxTickets > 0, "There should be at least one ticket.");
+        eventName = _eventName;
+        maxTickets = _maxTickets;
     }
 
     // Function to allow attendees to purchase tickets, ensuring sales are open and maxTickets limit hasn't been reached.
     function purchaseTicket(string memory attendeeName) public {
         // TODO: Ensure ticket sales are currently open before proceeding.
+        require(totalTicketsSold < maxTickets, "All tickets have been sold.");
+        uint ticketId = totalTicketsSold + 1;
+        ticketsSold[ticketId] = Ticket(attendeeName, ticketId, false, block.timestamp);
+        totalTicketsSold += 1;
+        emit TicketPurchased(ticketId, attendeeName, block.timestamp); // Include timestamp in the emitted event.
     }
 
     // Function to mark a ticket as used, verifying the ticket's existence and unused status.

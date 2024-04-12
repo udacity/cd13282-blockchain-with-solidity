@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 // Importing OpenZeppelin's Math library for safe mathematical operations.
 import "@openzeppelin/contracts/utils/math/Math.sol";

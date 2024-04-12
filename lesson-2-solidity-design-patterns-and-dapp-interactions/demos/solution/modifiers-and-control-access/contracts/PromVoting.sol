@@ -85,6 +85,8 @@ contract PromVoting {
         require(votes[msg.sender].timestamp == 0, "Voter has already voted."); // Ensure the voter hasn't already voted
         candidates[_candidateId].voteCount += 1; // Increment the selected candidate's vote count
         votes[msg.sender] = Vote(_candidateId, block.timestamp); // Record the vote
+        totalVotes += 1; // Increment totalVotes each time a vote is cast
+
         emit VoteCast(_candidateId, block.timestamp); // Emit an event for the vote
     }
 

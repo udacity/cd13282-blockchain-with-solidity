@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract EventTicketing {
-    // Define the Ticket struct with attendee information and purchase timestamp.
+// Importing the Ownable library from OpenZeppelin to use ownership functionality
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+// Extending the EventTicketing contract with Ownable to include ownership capabilities
+contract EventTicketing is Ownable {
     struct Ticket {
         string attendeeName;
         uint ticketId;
         bool isUsed;
-        uint timestamp;
+        uint timestamp; // Timestamp to record when the ticket was purchased
     }
 
     string public eventName;
@@ -19,7 +22,7 @@ contract EventTicketing {
     uint public startTime;
     uint public endTime;
 
-    // Modifier to ensure actions are taken within the ticket sales period.
+    // Modifier to ensure ticket sales occur within the designated period
     modifier salesOpen() {
         require(block.timestamp >= startTime && block.timestamp <= endTime, "Ticket sales are not open.");
         _;
@@ -31,24 +34,24 @@ contract EventTicketing {
         endTime = _endTime;
     }
 
-    // Only the event organizer can set event details, like name and max tickets.
-    function setEventDetails(string memory _eventName, uint _maxTickets) public {
+    // Function to set event details that can only be called by the owner of the contract
+    function setEventDetails(string memory _eventName, uint _maxTickets) public onlyOwner {
         require(bytes(_eventName).length > 0, "Event name cannot be empty.");
         require(_maxTickets > 0, "There should be at least one ticket.");
         eventName = _eventName;
         maxTickets = _maxTickets;
     }
 
-    // Attendees can purchase tickets if the sales period is open and tickets are available.
+    // Function to allow attendees to purchase tickets, ensuring sales are within the allowed period
     function purchaseTicket(string memory attendeeName) public salesOpen {
         require(totalTicketsSold < maxTickets, "All tickets have been sold.");
         uint ticketId = totalTicketsSold + 1;
         ticketsSold[ticketId] = Ticket(attendeeName, ticketId, false, block.timestamp);
         totalTicketsSold += 1;
-        emit TicketPurchased(ticketId, attendeeName, block.timestamp); // Include timestamp in the emitted event.
+        emit TicketPurchased(ticketId, attendeeName, block.timestamp);
     }
 
-    // Verify the ticket's existence and unused status before marking
+    // Function to mark a ticket as used, validating ticket ID and usage status
     function useTicket(uint ticketId) public {
         require(ticketId > 0 && ticketId <= totalTicketsSold, "Invalid ticket ID.");
         Ticket storage ticket = ticketsSold[ticketId];

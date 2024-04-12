@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+// TODO: Import the Ownable library from OpenZeppelin
+
+// TODO: Extend the EventTicketing contract with the Ownable contract from OpenZeppelin
 contract EventTicketing {
-    // Define the Ticket struct with attendee information and purchase timestamp.
     struct Ticket {
         string attendeeName;
         uint ticketId;
         bool isUsed;
-        uint timestamp;
+        uint timestamp; // Timestamp when the ticket was purchased
     }
 
     string public eventName;
@@ -31,7 +33,7 @@ contract EventTicketing {
         endTime = _endTime;
     }
 
-    // Only the event organizer can set event details, like name and max tickets.
+    // TODO: Add the onlyOwner modifier to restrict this function to the owner of the contract
     function setEventDetails(string memory _eventName, uint _maxTickets) public {
         require(bytes(_eventName).length > 0, "Event name cannot be empty.");
         require(_maxTickets > 0, "There should be at least one ticket.");
@@ -39,16 +41,14 @@ contract EventTicketing {
         maxTickets = _maxTickets;
     }
 
-    // Attendees can purchase tickets if the sales period is open and tickets are available.
     function purchaseTicket(string memory attendeeName) public salesOpen {
         require(totalTicketsSold < maxTickets, "All tickets have been sold.");
         uint ticketId = totalTicketsSold + 1;
         ticketsSold[ticketId] = Ticket(attendeeName, ticketId, false, block.timestamp);
         totalTicketsSold += 1;
-        emit TicketPurchased(ticketId, attendeeName, block.timestamp); // Include timestamp in the emitted event.
+        emit TicketPurchased(ticketId, attendeeName, block.timestamp);
     }
 
-    // Verify the ticket's existence and unused status before marking
     function useTicket(uint ticketId) public {
         require(ticketId > 0 && ticketId <= totalTicketsSold, "Invalid ticket ID.");
         Ticket storage ticket = ticketsSold[ticketId];

@@ -28,7 +28,7 @@ contract EventTicketing is Ownable {
         _;
     }
 
-    constructor(uint _startTime, uint _endTime) {
+    constructor(uint _startTime, uint _endTime, address initialOwner) Ownable(initialOwner) {
         require(_endTime > _startTime, "End time must be after start time.");
         startTime = _startTime;
         endTime = _endTime;

@@ -27,6 +27,8 @@ contract EventTicketing {
         _;
     }
 
+
+    // TODO: Modify the constructor to pass an initialOwner address to the Ownable constructor
     constructor(uint _startTime, uint _endTime) {
         require(_endTime > _startTime, "End time must be after start time.");
         startTime = _startTime;

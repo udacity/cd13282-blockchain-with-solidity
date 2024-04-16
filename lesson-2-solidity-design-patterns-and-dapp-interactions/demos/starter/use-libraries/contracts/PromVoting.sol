@@ -84,6 +84,7 @@ contract PromVoting {
     function vote(uint _candidateId) public onlyDuringVotingPeriod onlyRegisteredVoters cannotVoteForSelf(_candidateId) {
         require(votes[msg.sender].timestamp == 0, "Voter has already voted."); // Ensure the voter hasn't already voted
         candidates[_candidateId].voteCount += 1; // Increment the selected candidate's vote count
+        totalVotes += 1; // Increment the total vote count
         votes[msg.sender] = Vote(_candidateId, block.timestamp); // Record the vote
         emit VoteCast(_candidateId, block.timestamp); // Emit an event for the vote
     }

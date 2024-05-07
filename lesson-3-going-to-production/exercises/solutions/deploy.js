@@ -12,7 +12,7 @@ async function main() {
   const contract = await DecentralizedMarketplace.deploy();
 
   // Wait for it to be deployed
-  await contract.deployed();
+  // await contract.deployed();
 
   // The contract is now deployed, and you can log its address
   console.log(`DecentralizedMarketplace deployed successfully`);
